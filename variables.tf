@@ -39,8 +39,8 @@ variable "private_db_subnet_cidrs" {
 }
 
 variable "my_ip_cidr" {
-  type        = string
-  description = "Your public IP in CIDR format, e.g., 1.2.3.4/32"
+  type        = list(string)
+  description = "List of allowed public IP CIDRs"
 }
 
 variable "app_port" {
