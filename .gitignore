@@ -31,7 +31,6 @@ terraform.rc
 
 *.tfplan
 plan.out
-
 ##################################
 # Sensitive variable files
 ##################################
