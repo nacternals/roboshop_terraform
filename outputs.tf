@@ -32,3 +32,27 @@ output "igw_id" {
 output "public_route_table_id" {
   value = aws_route_table.public.id
 }
+
+output "eip_ids" {
+  value = aws_eip.eip[*].id
+}
+
+output "nat_gateway_ids" {
+  value = aws_nat_gateway.this[*].id
+}
+
+output "rt_nginx_ids" {
+  description = "NGINX private route table IDs (one per AZ)"
+  value       = aws_route_table.rt_nginx[*].id
+}
+
+output "rt_app_ids" {
+  description = "APP private route table IDs (one per AZ)"
+  value       = aws_route_table.rt_app[*].id
+}
+
+output "rt_db_ids" {
+  description = "DB private route table IDs (one per AZ)"
+  value       = aws_route_table.rt_db[*].id
+}
+
