@@ -18,7 +18,7 @@ variable "vpc_cidr" {
 }
 
 variable "azs" {
-  type = list(string)
+  type        = list(string)
   description = "list of aws availability zones"
 }
 
