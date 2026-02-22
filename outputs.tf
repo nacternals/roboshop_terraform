@@ -1,62 +1,62 @@
-output "vpc_id" {
-  description = "ID of the RoboShop VPC"
-  value       = aws_vpc.this.id
+############################
+# Network (VPC + Subnets)
+############################
+output "network" {
+  description = "VPC and subnet IDs"
+  value = {
+    vpc_id                   = aws_vpc.this.id
+    vpc_cidr_block           = aws_vpc.this.cidr_block
+    public_subnet_ids         = aws_subnet.public[*].id
+    private_nginx_subnet_ids  = aws_subnet.private_nginx[*].id
+    private_app_subnet_ids    = aws_subnet.private_app[*].id
+    private_db_subnet_ids     = aws_subnet.private_db[*].id
+  }
 }
 
-output "vpc_cidr_block" {
-  description = "CIDR block of the VPC"
-  value       = aws_vpc.this.cidr_block
+############################
+# Bastion
+############################
+output "bastion" {
+  description = "Bastion instance details"
+  value = {
+    bastion_iam_role_name       = aws_iam_role.roboshop_ec2_role.name
+    bastion_instance_id         = aws_instance.bastionHost.id
+    bastion_public_ip           = aws_instance.bastionHost.public_ip
+    bastion_security_group_id   = aws_security_group.bastion.id
+    bastion_subnet_id           = aws_subnet.public[0].id
+  }
 }
 
-output "public_subnet_ids" {
-  value = aws_subnet.public[*].id
+############################
+# Internet + NAT
+############################
+output "edge" {
+  description = "Internet gateway, EIPs and NAT gateways"
+  value = {
+    igw_id          = aws_internet_gateway.this.id
+    eip_ids         = aws_eip.eip[*].id
+    nat_gateway_ids = aws_nat_gateway.this[*].id
+  }
 }
 
-output "private_nginx_subnet_ids" {
-  value = aws_subnet.private_nginx[*].id
+############################
+# Route Tables
+############################
+output "route_tables" {
+  description = "Route table IDs"
+  value = {
+    public_route_table_id = aws_route_table.public.id
+    rt_nginx_ids          = aws_route_table.rt_nginx[*].id
+    rt_app_ids            = aws_route_table.rt_app[*].id
+    rt_db_ids             = aws_route_table.rt_db[*].id
+  }
 }
 
-output "private_app_subnet_ids" {
-  value = aws_subnet.private_app[*].id
-}
-
-output "private_db_subnet_ids" {
-  value = aws_subnet.private_db[*].id
-}
-
-output "igw_id" {
-  description = "Internet Gateway ID"
-  value       = aws_internet_gateway.this.id
-}
-
-output "public_route_table_id" {
-  value = aws_route_table.public.id
-}
-
-output "eip_ids" {
-  value = aws_eip.eip[*].id
-}
-
-output "nat_gateway_ids" {
-  value = aws_nat_gateway.this[*].id
-}
-
-output "rt_nginx_ids" {
-  description = "NGINX private route table IDs (one per AZ)"
-  value       = aws_route_table.rt_nginx[*].id
-}
-
-output "rt_app_ids" {
-  description = "APP private route table IDs (one per AZ)"
-  value       = aws_route_table.rt_app[*].id
-}
-
-output "rt_db_ids" {
-  description = "DB private route table IDs (one per AZ)"
-  value       = aws_route_table.rt_db[*].id
-}
-
+############################
+# Security Groups
+############################
 output "sg_ids" {
+  description = "Security group IDs"
   value = {
     bastion      = aws_security_group.bastion.id
     alb_public   = aws_security_group.alb_public.id
@@ -69,34 +69,3 @@ output "sg_ids" {
     rabbitmq     = aws_security_group.rabbitmq.id
   }
 }
-
-
-#################################
-# Bastion Outputs
-#################################
-
-output "bastion_instance_id" {
-  description = "Bastion EC2 Instance ID"
-  value       = aws_instance.bastionHost.id
-}
-
-output "bastion_public_ip" {
-  description = "Public IP of Bastion"
-  value       = aws_instance.bastionHost.public_ip
-}
-
-output "bastion_security_group_id" {
-  description = "Security Group ID attached to Bastion"
-  value       = aws_security_group.bastion.id
-}
-
-output "bastion_subnet_id" {
-  description = "Subnet ID where Bastion is deployed"
-  value       = aws_subnet.public[0].id
-}
-
-output "bastion_iam_role_name" {
-  description = "IAM Role attached to Bastion"
-  value       = aws_iam_role.roboshop_ec2_role.name
-}
-

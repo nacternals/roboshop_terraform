@@ -618,6 +618,7 @@ resource "aws_instance" "bastionHost" {
   subnet_id                   = aws_subnet.public[0].id
   vpc_security_group_ids      = [aws_security_group.bastion.id]
   associate_public_ip_address = true
+  key_name = var.bastion_key_name
 
   iam_instance_profile = aws_iam_instance_profile.roboshop_ec2_profile.name
 
