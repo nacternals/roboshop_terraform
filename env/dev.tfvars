@@ -12,8 +12,8 @@ private_db_subnet_cidrs    = ["10.10.31.0/24", "10.10.32.0/24"]
 my_ip_cidr = ["110.235.236.116/32"]
 
 # Controller/Bastion AMI + sizing
-bastion_ami_id = "ami-0f3caa1cf4417e51b"
-bastion_instance_type  = "t2.micro"
+bastion_ami_id        = "ami-0f3caa1cf4417e51b"
+bastion_instance_type = "t2.micro"
 
 # # Where to launch the controller
 # bastion_subnet_id = "aws_subnet.public[0].id"
