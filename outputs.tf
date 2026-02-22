@@ -102,3 +102,35 @@ output "mysql" {
     iam_role_name     = aws_iam_role.roboshop_ec2_role.name
   }
 }
+
+############################
+# Redis Outputs
+############################
+
+output "redis" {
+  description = "Redis instance details"
+  value = {
+    instance_id       = aws_instance.redis.id
+    private_ip        = aws_instance.redis.private_ip
+    availability_zone = aws_instance.redis.availability_zone
+    subnet_id         = aws_subnet.private_db[1].id
+    security_group_id = aws_security_group.redis.id
+    iam_role_name     = aws_iam_role.roboshop_ec2_role.name
+  }
+}
+
+############################
+# RabbitMQ Outputs
+############################
+
+output "rabbitmq" {
+  description = "RabbitMQ instance details"
+  value = {
+    instance_id       = aws_instance.rabbitmq.id
+    private_ip        = aws_instance.rabbitmq.private_ip
+    availability_zone = aws_instance.rabbitmq.availability_zone
+    subnet_id         = aws_subnet.private_db[1].id
+    security_group_id = aws_security_group.rabbitmq.id
+    iam_role_name     = aws_iam_role.roboshop_ec2_role.name
+  }
+}

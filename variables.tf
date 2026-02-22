@@ -68,7 +68,7 @@ variable "dev_bastion_key_name" {
 }
 
 
-#Tier: db Details:
+#db tier variable details:
 variable "db_tier_instance_type" {
   type        = string
   description = "db tier EC2 instance type"

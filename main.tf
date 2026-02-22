@@ -766,3 +766,98 @@ resource "aws_instance" "mysql" {
   }
 }
 
+resource "aws_instance" "redis" {
+  ami           = var.db_tier_ami_id
+  instance_type = var.db_tier_instance_type
+  key_name      = var.db_tier_ec2_key_name
+
+  subnet_id              = aws_subnet.private_db[1].id
+  vpc_security_group_ids = [aws_security_group.redis.id]
+
+  # Private subnet + explicitly disable public IP
+  associate_public_ip_address = false
+
+  iam_instance_profile = aws_iam_instance_profile.roboshop_ec2_profile.name
+
+  root_block_device {
+    volume_size = 10
+    volume_type = "gp2"
+  }
+
+  user_data = <<-EOF
+              #!/bin/bash
+              set -e
+
+              # Create ansadmin (for Ansible)
+              useradd ansadmin || true
+              mkdir -p /home/ansadmin/.ssh
+              chmod 700 /home/ansadmin/.ssh
+
+              cat <<'KEYEOF' > /home/ansadmin/.ssh/authorized_keys
+              ${var.db_tier_ansadmin_public_key}
+              KEYEOF
+
+              chmod 600 /home/ansadmin/.ssh/authorized_keys
+              chown -R ansadmin:ansadmin /home/ansadmin/.ssh
+
+              echo "ansadmin ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/ansadmin
+              chmod 440 /etc/sudoers.d/ansadmin
+              EOF
+
+  tags = {
+    Name        = "redis"
+    Project     = "roboshop"
+    Environment = "dev"
+    Tier        = "db"
+    Component   = "redis"
+  }
+}
+
+
+resource "aws_instance" "rabbitmq" {
+  ami           = var.db_tier_ami_id
+  instance_type = var.db_tier_instance_type
+  key_name      = var.db_tier_ec2_key_name
+
+  subnet_id              = aws_subnet.private_db[1].id
+  vpc_security_group_ids = [aws_security_group.rabbitmq.id]
+
+  # Private subnet + explicitly disable public IP
+  associate_public_ip_address = false
+
+  iam_instance_profile = aws_iam_instance_profile.roboshop_ec2_profile.name
+
+  root_block_device {
+    volume_size = 10
+    volume_type = "gp2"
+  }
+
+  user_data = <<-EOF
+              #!/bin/bash
+              set -e
+
+              # Create ansadmin (for Ansible)
+              useradd ansadmin || true
+              mkdir -p /home/ansadmin/.ssh
+              chmod 700 /home/ansadmin/.ssh
+
+              cat <<'KEYEOF' > /home/ansadmin/.ssh/authorized_keys
+              ${var.db_tier_ansadmin_public_key}
+              KEYEOF
+
+              chmod 600 /home/ansadmin/.ssh/authorized_keys
+              chown -R ansadmin:ansadmin /home/ansadmin/.ssh
+
+              echo "ansadmin ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/ansadmin
+              chmod 440 /etc/sudoers.d/ansadmin
+              EOF
+
+  tags = {
+    Name        = "rabbitmq"
+    Project     = "roboshop"
+    Environment = "dev"
+    Tier        = "db"
+    Component   = "rabbitmq"
+  }
+}
+
