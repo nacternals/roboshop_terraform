@@ -48,3 +48,26 @@ variable "app_port" {
   description = "Microservices port"
   default     = 8080
 }
+
+
+# EC2 (Ansible Controller / Bastion that runs Ansible dynamic inventory)
+variable "bastion_ami_id" {
+  type        = string
+  description = "AMI ID for the ansibleController/bastion instance"
+}
+
+variable "bastion_instance_type" {
+  type        = string
+  description = "Instance type for the ansibleController/bastion instance"
+  default     = "t3.micro"
+}
+
+# variable "bastion_subnet_id" {
+#   type        = string
+#   description = "Subnet ID where the ansibleController/bastion instance should be launched"
+# }
+
+# variable "bastion_sg_id" {
+#   type        = string
+#   description = "Security Group ID to attach to the ansibleController/bastion instance"
+# }

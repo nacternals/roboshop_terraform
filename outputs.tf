@@ -71,3 +71,32 @@ output "sg_ids" {
 }
 
 
+#################################
+# Bastion Outputs
+#################################
+
+output "bastion_instance_id" {
+  description = "Bastion EC2 Instance ID"
+  value       = aws_instance.bastionHost.id
+}
+
+output "bastion_public_ip" {
+  description = "Public IP of Bastion"
+  value       = aws_instance.bastionHost.public_ip
+}
+
+output "bastion_security_group_id" {
+  description = "Security Group ID attached to Bastion"
+  value       = aws_security_group.bastion.id
+}
+
+output "bastion_subnet_id" {
+  description = "Subnet ID where Bastion is deployed"
+  value       = aws_subnet.public[0].id
+}
+
+output "bastion_iam_role_name" {
+  description = "IAM Role attached to Bastion"
+  value       = aws_iam_role.roboshop_ec2_role.name
+}
+

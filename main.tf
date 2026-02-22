@@ -506,3 +506,167 @@ resource "aws_security_group" "rabbitmq" {
   }
 }
 
+############################
+# IAM Role for EC2 (Ansible Controller/Bastion)
+############################
+
+resource "aws_iam_role" "roboshop_ec2_role" {
+  name = "Roboshop_EC2_Role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "ec2.amazonaws.com"
+      }
+      Action = "sts:AssumeRole"
+    }]
+  })
+
+  tags = {
+    Name        = "Roboshop_EC2_Role"
+    Project     = var.project
+    Environment = var.environment
+  }
+}
+
+# Instance profile (attach this to the EC2 instance that runs ansible)
+resource "aws_iam_instance_profile" "roboshop_ec2_profile" {
+  name = "Roboshop_EC2_Profile"
+  role = aws_iam_role.roboshop_ec2_role.name
+}
+
+############################
+# Policy: Inventory Read + Create EC2
+############################
+
+resource "aws_iam_policy" "roboshop_ec2_ansible_policy" {
+  name        = "Roboshop_EC2_AnsibleInventory_CreateEC2"
+  description = "Allows Ansible dynamic inventory (Describe) and EC2 instance creation."
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      # --- Dynamic inventory permissions (read-only) ---
+      {
+        Sid    = "InventoryReadOnly"
+        Effect = "Allow"
+        Action = [
+          "ec2:DescribeInstances",
+          "ec2:DescribeInstanceStatus",
+          "ec2:DescribeTags",
+          "ec2:DescribeImages",
+          "ec2:DescribeVpcs",
+          "ec2:DescribeSubnets",
+          "ec2:DescribeSecurityGroups",
+          "ec2:DescribeRouteTables",
+          "ec2:DescribeAvailabilityZones",
+          "ec2:DescribeKeyPairs"
+        ]
+        Resource = "*"
+      },
+
+      # --- Create/Manage EC2 instances ---
+      {
+        Sid    = "CreateAndTagInstances"
+        Effect = "Allow"
+        Action = [
+          "ec2:RunInstances",
+          "ec2:CreateTags",
+          "ec2:DeleteTags"
+        ]
+        Resource = "*"
+      },
+
+      # Optional but commonly needed when running instances (depends on how you launch)
+      {
+        Sid    = "OptionalLifecycle"
+        Effect = "Allow"
+        Action = [
+          "ec2:TerminateInstances",
+          "ec2:StopInstances",
+          "ec2:StartInstances"
+        ]
+        Resource = "*"
+      },
+
+      # If the instance you launch needs an IAM role/profile, you must allow PassRole.
+      # Tighten Resource to specific roles later (recommended).
+      {
+        Sid    = "AllowPassRole"
+        Effect = "Allow"
+        Action = [
+          "iam:PassRole"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "attach_roboshop_policy" {
+  role       = aws_iam_role.roboshop_ec2_role.name
+  policy_arn = aws_iam_policy.roboshop_ec2_ansible_policy.arn
+}
+
+
+
+resource "aws_instance" "bastionHost" {
+  ami                         = var.bastion_ami_id
+  instance_type               = var.bastion_instance_type
+  subnet_id                   = aws_subnet.public[0].id
+  vpc_security_group_ids      = [aws_security_group.bastion.id]
+  associate_public_ip_address = true
+
+  iam_instance_profile = aws_iam_instance_profile.roboshop_ec2_profile.name
+
+  user_data = <<-EOF
+              #!/bin/bash
+              set -e
+
+              echo "===== Bastion Bootstrap Started ====="
+
+              # Update system
+              dnf update -y
+
+              # Install base tools
+              dnf install -y git unzip tree
+
+              # Install Ansible + AWS SDK
+              dnf install -y ansible-core python3-boto3 python3-botocore
+
+              # Install AWS CLI (optional but useful)
+              dnf install -y awscli
+
+              # Install AWS collections
+              mkdir -p /usr/share/ansible/collections
+              ansible-galaxy collection install amazon.aws:6.5.0 community.aws \
+                -p /usr/share/ansible/collections
+
+              # Create ansadmin user if not exists
+              id ansadmin &>/dev/null || useradd ansadmin
+
+              mkdir -p /home/ansadmin/.ssh
+              chown -R ansadmin:ansadmin /home/ansadmin/.ssh
+              chmod 700 /home/ansadmin/.ssh
+
+              # Generate SSH key (only if not exists)
+              if [ ! -f /home/ansadmin/.ssh/id_ed25519 ]; then
+                sudo -u ansadmin ssh-keygen -t ed25519 -N "" \
+                  -f /home/ansadmin/.ssh/id_ed25519
+              fi
+
+              chmod 600 /home/ansadmin/.ssh/id_ed25519
+              chmod 644 /home/ansadmin/.ssh/id_ed25519.pub
+              chown ansadmin:ansadmin /home/ansadmin/.ssh/id_ed25519*
+
+              echo "===== Bastion Bootstrap Completed ====="
+              EOF
+
+  tags = {
+    Name        = "${var.project}-${var.environment}-bastionHost"
+    Project     = var.project
+    Environment = var.environment
+  }
+}
