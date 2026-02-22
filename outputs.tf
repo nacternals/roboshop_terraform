@@ -6,24 +6,10 @@ output "network" {
   value = {
     vpc_id                   = aws_vpc.this.id
     vpc_cidr_block           = aws_vpc.this.cidr_block
-    public_subnet_ids         = aws_subnet.public[*].id
-    private_nginx_subnet_ids  = aws_subnet.private_nginx[*].id
-    private_app_subnet_ids    = aws_subnet.private_app[*].id
-    private_db_subnet_ids     = aws_subnet.private_db[*].id
-  }
-}
-
-############################
-# Bastion
-############################
-output "bastion" {
-  description = "Bastion instance details"
-  value = {
-    bastion_iam_role_name       = aws_iam_role.roboshop_ec2_role.name
-    bastion_instance_id         = aws_instance.bastionHost.id
-    bastion_public_ip           = aws_instance.bastionHost.public_ip
-    bastion_security_group_id   = aws_security_group.bastion.id
-    bastion_subnet_id           = aws_subnet.public[0].id
+    public_subnet_ids        = aws_subnet.public[*].id
+    private_nginx_subnet_ids = aws_subnet.private_nginx[*].id
+    private_app_subnet_ids   = aws_subnet.private_app[*].id
+    private_db_subnet_ids    = aws_subnet.private_db[*].id
   }
 }
 
@@ -67,5 +53,52 @@ output "sg_ids" {
     mysql        = aws_security_group.mysql.id
     redis        = aws_security_group.redis.id
     rabbitmq     = aws_security_group.rabbitmq.id
+  }
+}
+
+
+############################
+# Bastion
+############################
+output "bastion" {
+  description = "Bastion instance details"
+  value = {
+    bastion_iam_role_name     = aws_iam_role.roboshop_ec2_role.name
+    bastion_instance_id       = aws_instance.bastionHost.id
+    bastion_public_ip         = aws_instance.bastionHost.public_ip
+    bastion_security_group_id = aws_security_group.bastion.id
+    bastion_subnet_id         = aws_subnet.public[0].id
+  }
+}
+
+############################
+# MongoDB Outputs
+############################
+
+output "mongodb" {
+  description = "MongoDB instance details"
+  value = {
+    instance_id       = aws_instance.mongodb.id
+    private_ip        = aws_instance.mongodb.private_ip
+    availability_zone = aws_instance.mongodb.availability_zone
+    subnet_id         = aws_subnet.private_db[0].id
+    security_group_id = aws_security_group.mongodb.id
+    iam_role_name     = aws_iam_role.roboshop_ec2_role.name
+  }
+}
+
+############################
+# MySQL Outputs
+############################
+
+output "mysql" {
+  description = "MySQL instance details"
+  value = {
+    instance_id       = aws_instance.mysql.id
+    private_ip        = aws_instance.mysql.private_ip
+    availability_zone = aws_instance.mysql.availability_zone
+    subnet_id         = aws_subnet.private_db[0].id
+    security_group_id = aws_security_group.mysql.id
+    iam_role_name     = aws_iam_role.roboshop_ec2_role.name
   }
 }

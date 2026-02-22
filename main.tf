@@ -613,12 +613,12 @@ resource "aws_iam_role_policy_attachment" "attach_roboshop_policy" {
 
 
 resource "aws_instance" "bastionHost" {
-  ami                         = var.bastion_ami_id
-  instance_type               = var.bastion_instance_type
+  ami                         = var.dev_bastion_ami_id
+  instance_type               = var.dev_bastion_instance_type
   subnet_id                   = aws_subnet.public[0].id
   vpc_security_group_ids      = [aws_security_group.bastion.id]
   associate_public_ip_address = true
-  key_name = var.bastion_key_name
+  key_name                    = var.dev_bastion_key_name
 
   iam_instance_profile = aws_iam_instance_profile.roboshop_ec2_profile.name
 
@@ -671,3 +671,98 @@ resource "aws_instance" "bastionHost" {
     Environment = var.environment
   }
 }
+
+resource "aws_instance" "mongodb" {
+  ami           = var.db_tier_ami_id
+  instance_type = var.db_tier_instance_type
+  key_name      = var.db_tier_ec2_key_name
+
+  subnet_id              = aws_subnet.private_db[0].id
+  vpc_security_group_ids = [aws_security_group.mongodb.id]
+
+  # Private subnet + explicitly disable public IP
+  associate_public_ip_address = false
+
+  iam_instance_profile = aws_iam_instance_profile.roboshop_ec2_profile.name
+
+  root_block_device {
+    volume_size = 10
+    volume_type = "gp2"
+  }
+
+  user_data = <<-EOF
+              #!/bin/bash
+              set -e
+
+              # Create ansadmin (for Ansible)
+              useradd ansadmin || true
+              mkdir -p /home/ansadmin/.ssh
+              chmod 700 /home/ansadmin/.ssh
+
+              cat <<'KEYEOF' > /home/ansadmin/.ssh/authorized_keys
+              ${var.db_tier_ansadmin_public_key}
+              KEYEOF
+
+              chmod 600 /home/ansadmin/.ssh/authorized_keys
+              chown -R ansadmin:ansadmin /home/ansadmin/.ssh
+
+              echo "ansadmin ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/ansadmin
+              chmod 440 /etc/sudoers.d/ansadmin
+              EOF
+
+  tags = {
+    Name        = "mongodb"
+    Project     = "roboshop"
+    Environment = "dev"
+    Tier        = "db"
+    Component   = "mongodb"
+  }
+}
+
+resource "aws_instance" "mysql" {
+  ami           = var.db_tier_ami_id
+  instance_type = var.db_tier_instance_type
+  key_name      = var.db_tier_ec2_key_name
+
+  subnet_id              = aws_subnet.private_db[0].id
+  vpc_security_group_ids = [aws_security_group.mysql.id]
+
+  # Private subnet + explicitly disable public IP
+  associate_public_ip_address = false
+
+  iam_instance_profile = aws_iam_instance_profile.roboshop_ec2_profile.name
+
+  root_block_device {
+    volume_size = 10
+    volume_type = "gp2"
+  }
+
+  user_data = <<-EOF
+              #!/bin/bash
+              set -e
+
+              # Create ansadmin (for Ansible)
+              useradd ansadmin || true
+              mkdir -p /home/ansadmin/.ssh
+              chmod 700 /home/ansadmin/.ssh
+
+              cat <<'KEYEOF' > /home/ansadmin/.ssh/authorized_keys
+              ${var.db_tier_ansadmin_public_key}
+              KEYEOF
+
+              chmod 600 /home/ansadmin/.ssh/authorized_keys
+              chown -R ansadmin:ansadmin /home/ansadmin/.ssh
+
+              echo "ansadmin ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/ansadmin
+              chmod 440 /etc/sudoers.d/ansadmin
+              EOF
+
+  tags = {
+    Name        = "mysql"
+    Project     = "roboshop"
+    Environment = "dev"
+    Tier        = "db"
+    Component   = "mysql"
+  }
+}
+
